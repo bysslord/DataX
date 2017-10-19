@@ -93,11 +93,12 @@ public class HdfsWriter extends Writer {
             if(null == fieldDelimiter){
                 throw DataXException.asDataXException(HdfsWriterErrorCode.REQUIRED_VALUE,
                         String.format("您提供配置文件有误，[%s]是必填参数.", Key.FIELD_DELIMITER));
-            }else if(1 != fieldDelimiter.length()){
-                // warn: if have, length must be one
-                throw DataXException.asDataXException(HdfsWriterErrorCode.ILLEGAL_VALUE,
-                        String.format("仅仅支持单字符切分, 您配置的切分为 : [%s]", fieldDelimiter));
             }
+//            else if(1 != fieldDelimiter.length()){
+                // warn: if have, length must be one
+//                throw DataXException.asDataXException(HdfsWriterErrorCode.ILLEGAL_VALUE,
+//                        String.format("仅仅支持单字符切分, 您配置的切分为 : [%s]", fieldDelimiter));
+//            }
             //compress check
             this.compress  = this.writerSliceConfig.getString(Key.COMPRESS,null);
             if(fileType.equalsIgnoreCase("TEXT")){
@@ -211,7 +212,7 @@ public class HdfsWriter extends Writer {
 
             String fileSuffix;
             //临时存放路径
-            String storePath =  buildTmpFilePath(this.path);
+            String storePath = buildTmpFilePath(this.path);
             //最终存放路径
             String endStorePath = buildFilePath();
             this.path = endStorePath;
@@ -260,20 +261,20 @@ public class HdfsWriter extends Writer {
         }
 
         private String buildFilePath() {
-            boolean isEndWithSeparator = false;
-            switch (IOUtils.DIR_SEPARATOR) {
-                case IOUtils.DIR_SEPARATOR_UNIX:
-                    isEndWithSeparator = this.path.endsWith(String
-                            .valueOf(IOUtils.DIR_SEPARATOR));
-                    break;
-                case IOUtils.DIR_SEPARATOR_WINDOWS:
-                    isEndWithSeparator = this.path.endsWith(String
-                            .valueOf(IOUtils.DIR_SEPARATOR_WINDOWS));
-                    break;
-                default:
-                    break;
-            }
-            if (!isEndWithSeparator) {
+//            boolean isEndWithSeparator = false;
+//            switch (IOUtils.DIR_SEPARATOR) {
+//                case IOUtils.DIR_SEPARATOR_UNIX:
+//                    isEndWithSeparator = this.path.endsWith(String
+//                            .valueOf(IOUtils.DIR_SEPARATOR));
+//                    break;
+//                case IOUtils.DIR_SEPARATOR_WINDOWS:
+//                    isEndWithSeparator = this.path.endsWith(String
+//                            .valueOf(IOUtils.DIR_SEPARATOR_WINDOWS));
+//                    break;
+//                default:
+//                    break;
+//            }
+            if (!this.path.endsWith(String.valueOf(IOUtils.DIR_SEPARATOR))) {
                 this.path = this.path + IOUtils.DIR_SEPARATOR;
             }
             return this.path;
@@ -286,38 +287,39 @@ public class HdfsWriter extends Writer {
          */
         private String buildTmpFilePath(String userPath) {
             String tmpFilePath;
-            boolean isEndWithSeparator = false;
-            switch (IOUtils.DIR_SEPARATOR) {
-                case IOUtils.DIR_SEPARATOR_UNIX:
-                    isEndWithSeparator = userPath.endsWith(String
-                            .valueOf(IOUtils.DIR_SEPARATOR));
-                    break;
-                case IOUtils.DIR_SEPARATOR_WINDOWS:
-                    isEndWithSeparator = userPath.endsWith(String
-                            .valueOf(IOUtils.DIR_SEPARATOR_WINDOWS));
-                    break;
-                default:
-                    break;
-            }
+//            boolean isEndWithSeparator = false;
+//            switch (IOUtils.DIR_SEPARATOR) {
+//                case IOUtils.DIR_SEPARATOR_UNIX:
+//                    isEndWithSeparator = userPath.endsWith(String
+//                            .valueOf(IOUtils.DIR_SEPARATOR));
+//                    break;
+//                case IOUtils.DIR_SEPARATOR_WINDOWS:
+//                    isEndWithSeparator = userPath.endsWith(String
+//                            .valueOf(IOUtils.DIR_SEPARATOR_WINDOWS));
+//                    break;
+//                default:
+//                    break;
+//            }
+//            tmpSuffix = UUID.randomUUID().toString().replace('-', '_');
+//            if (!userPath.endsWith(String.valueOf(IOUtils.DIR_SEPARATOR))) {
+//                tmpFilePath = String.format("%s__%s%s", userPath, tmpSuffix, IOUtils.DIR_SEPARATOR);
+//            }else if("/".equals(userPath)){
+//                tmpFilePath = String.format("%s__%s%s", userPath, tmpSuffix, IOUtils.DIR_SEPARATOR);
+//            }else{
+//                tmpFilePath = String.format("%s__%s%s", userPath.substring(0,userPath.length()-1), tmpSuffix, IOUtils.DIR_SEPARATOR);
+//            }
+//            while(hdfsHelper.isPathexists(tmpFilePath))
             String tmpSuffix;
-            tmpSuffix = UUID.randomUUID().toString().replace('-', '_');
-            if (!isEndWithSeparator) {
-                tmpFilePath = String.format("%s__%s%s", userPath, tmpSuffix, IOUtils.DIR_SEPARATOR);
-            }else if("/".equals(userPath)){
-                tmpFilePath = String.format("%s__%s%s", userPath, tmpSuffix, IOUtils.DIR_SEPARATOR);
-            }else{
-                tmpFilePath = String.format("%s__%s%s", userPath.substring(0,userPath.length()-1), tmpSuffix, IOUtils.DIR_SEPARATOR);
-            }
-            while(hdfsHelper.isPathexists(tmpFilePath)){
+            do {
                 tmpSuffix = UUID.randomUUID().toString().replace('-', '_');
-                if (!isEndWithSeparator) {
+                if (!userPath.endsWith(String.valueOf(IOUtils.DIR_SEPARATOR))) {
                     tmpFilePath = String.format("%s__%s%s", userPath, tmpSuffix, IOUtils.DIR_SEPARATOR);
                 }else if("/".equals(userPath)){
                     tmpFilePath = String.format("%s__%s%s", userPath, tmpSuffix, IOUtils.DIR_SEPARATOR);
                 }else{
                     tmpFilePath = String.format("%s__%s%s", userPath.substring(0,userPath.length()-1), tmpSuffix, IOUtils.DIR_SEPARATOR);
                 }
-            }
+            } while (hdfsHelper.isPathexists(tmpFilePath));
             return tmpFilePath;
         }
     }

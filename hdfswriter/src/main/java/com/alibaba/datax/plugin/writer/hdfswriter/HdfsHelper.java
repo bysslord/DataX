@@ -281,7 +281,7 @@ public  class HdfsHelper {
      */
     public void textFileStartWrite(RecordReceiver lineReceiver, Configuration config, String fileName,
                                    TaskPluginCollector taskPluginCollector){
-        char fieldDelimiter = config.getChar(Key.FIELD_DELIMITER);
+        String fieldDelimiter = config.getString(Key.FIELD_DELIMITER);
         List<Configuration>  columns = config.getListConfiguration(Key.COLUMN);
         String compress = config.getString(Key.COMPRESS,null);
 
@@ -291,14 +291,15 @@ public  class HdfsHelper {
         //todo 需要进一步确定TASK_ATTEMPT_ID
         conf.set(JobContext.TASK_ATTEMPT_ID, attempt);
         FileOutputFormat outFormat = new TextOutputFormat();
-        outFormat.setOutputPath(conf, outputPath);
-        outFormat.setWorkOutputPath(conf, outputPath);
+        FileOutputFormat.setOutputPath(conf, outputPath);
+        FileOutputFormat.setWorkOutputPath(conf, outputPath);
         if(null != compress) {
             Class<? extends CompressionCodec> codecClass = getCompressCodec(compress);
             if (null != codecClass) {
-                outFormat.setOutputCompressorClass(conf, codecClass);
+                FileOutputFormat.setOutputCompressorClass(conf, codecClass);
             }
         }
+
         try {
             RecordWriter writer = outFormat.getRecordWriter(fileSystem, conf, outputPath.toString(), Reporter.NULL);
             Record record = null;
@@ -319,7 +320,7 @@ public  class HdfsHelper {
     }
 
     public static MutablePair<Text, Boolean> transportOneRecord(
-            Record record, char fieldDelimiter, List<Configuration> columnsConfiguration, TaskPluginCollector taskPluginCollector) {
+            Record record, String fieldDelimiter, List<Configuration> columnsConfiguration, TaskPluginCollector taskPluginCollector) {
         MutablePair<List<Object>, Boolean> transportResultList =  transportOneRecord(record,columnsConfiguration,taskPluginCollector);
         //保存<转换后的数据,是否是脏数据>
         MutablePair<Text, Boolean> transportResult = new MutablePair<Text, Boolean>();
@@ -333,8 +334,8 @@ public  class HdfsHelper {
     }
 
     public Class<? extends CompressionCodec>  getCompressCodec(String compress){
-        Class<? extends CompressionCodec> codecClass = null;
-        if(null == compress){
+        Class<? extends CompressionCodec> codecClass;
+        if(null == compress || compress.equalsIgnoreCase("none")){
             codecClass = null;
         }else if("GZIP".equalsIgnoreCase(compress)){
             codecClass = org.apache.hadoop.io.compress.GzipCodec.class;
@@ -361,7 +362,7 @@ public  class HdfsHelper {
      */
     public void orcFileStartWrite(RecordReceiver lineReceiver, Configuration config, String fileName,
                                   TaskPluginCollector taskPluginCollector){
-        List<Configuration>  columns = config.getListConfiguration(Key.COLUMN);
+        List<Configuration> columns = config.getListConfiguration(Key.COLUMN);
         String compress = config.getString(Key.COMPRESS, null);
         List<String> columnNames = getColumnNames(columns);
         List<ObjectInspector> columnTypeInspectors = getColumnTypeInspectors(columns);
@@ -374,7 +375,7 @@ public  class HdfsHelper {
         if(!"NONE".equalsIgnoreCase(compress) && null != compress ) {
             Class<? extends CompressionCodec> codecClass = getCompressCodec(compress);
             if (null != codecClass) {
-                outFormat.setOutputCompressorClass(conf, codecClass);
+                FileOutputFormat.setOutputCompressorClass(conf, codecClass);
             }
         }
         try {
@@ -452,7 +453,7 @@ public  class HdfsHelper {
                             .asDataXException(
                                     HdfsWriterErrorCode.ILLEGAL_VALUE,
                                     String.format(
-                                            "您的配置文件中的列配置信息有误. 因为DataX 不支持数据库写入这种字段类型. 字段名:[%s], 字段类型:[%d]. 请修改表中该字段的类型或者不同步该字段.",
+                                            "您的配置文件中的列配置信息有误. 因为DataX 不支持数据库写入这种字段类型. 字段名:[%s], 字段类型:[%s]. 请修改表中该字段的类型或者不同步该字段.",
                                             eachColumnConf.getString(Key.NAME),
                                             eachColumnConf.getString(Key.TYPE)));
             }
@@ -534,7 +535,7 @@ public  class HdfsHelper {
                                         .asDataXException(
                                                 HdfsWriterErrorCode.ILLEGAL_VALUE,
                                                 String.format(
-                                                        "您的配置文件中的列配置信息有误. 因为DataX 不支持数据库写入这种字段类型. 字段名:[%s], 字段类型:[%d]. 请修改表中该字段的类型或者不同步该字段.",
+                                                        "您的配置文件中的列配置信息有误. 因为DataX 不支持数据库写入这种字段类型. 字段名:[%s], 字段类型:[%s]. 请修改表中该字段的类型或者不同步该字段.",
                                                         columnsConfiguration.get(i).getString(Key.NAME),
                                                         columnsConfiguration.get(i).getString(Key.TYPE)));
                         }
